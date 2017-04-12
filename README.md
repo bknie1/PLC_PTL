@@ -1,6 +1,5 @@
-# PLC Pick to Light Solution
-## Unity Pro
-### Brandon Knieriem, Ian Schnepf, Hongchi Liu
+# PLC Pick to Light Solution in Unity Pro
+By Brandon Knieriem, Ian Schnepf, Hongchi Liu
 
 ## Process Overview
 
