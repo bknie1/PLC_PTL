@@ -1,5 +1,5 @@
 # PLC Pick to Light Solution in Unity Pro
-By Brandon Knieriem, Ian Schnepf, Hongchi Liu
+By Brandon Knieriem, Ian Schnepf, Connor Myatt, Juan Azaldagui, and Hongchi Liu
 
 ## Process Overview
 
@@ -18,8 +18,20 @@ This solution will use a PLC interface to inform station assembly employees what
     - By hand.
     - By conveyer.
 
+## Hardware
+- BMX XBP 0800
+	- 8 Channel Master Board
+- BMX P34 2020
+	- Modbus Ethernet Processor
+- DDI 6402K
+	- 64 Channel Discrete Input
+- DDO 6402K
+	- 64 Channel Discrete Output
+- NOM 0200.2
+	- Serial Scanner Input
+	- Use .2, not .1. .2 is the newer model.
+	
 ## Variables
-
 - MAIN/GLOBAL
 	- WorkStation 1 DFB
 		- Input
