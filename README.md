@@ -6,7 +6,8 @@ By Brandon Knieriem, Ian Schnepf, Connor Myatt, Juan Azaldagui, and Hongchi Liu
 ### In Brief
 This solution will use a PLC interface to inform station assembly employees what parts they need, per chassis, to complete the expected chassis at that station. The system uses timers and lights to guide the employee through the assembly process. The solution should mitigate nearly $500,000 in scrap loss.
 
-- 30 Configurations
+- 43 Configurations
+- 59 Potential Bins
 
 #### Use Case
 1.	Employee receives chassis.
