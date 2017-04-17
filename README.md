@@ -40,12 +40,19 @@ Event # - Format: File - Code Block (if applicable) - Action
 		- Station specific lights -> lights.
 		- Shared Horn/Alarm -> Horn/Alarm.
 3. DFB: WorkStation - Overall - Code is reading for processing.
-	1. Time stamp when assembly starts. Time to assemble lock variable.
-	2. Find lock offset. Iterate through until a match is found. Logic: While match not found. Syntax: IF NOT ... THEN
+	1. If code exists (> 0), proceed.
+		- Otherwise, reset everything:
+			- Current_Lock := '';
+			- Lock_is_Found := FALSE;
+			- Bin_Is_Found:= FALSE;
+			- Correct_Bin_Located := FALSE;
+			- Lock_Completed := FALSE;
+	2. Time stamp when assembly starts. Time to assemble lock variable.
+	3. Find lock offset. Iterate through until a match is found. Logic: While match not found. Syntax: IF NOT ... THEN
 		- Match == FALSE? Error.
-	3. Match == TRUE? Assign match index to current lock offset. Part offset is set to 0.
+	4. Match == TRUE? Assign match index to current lock offset. Part offset is set to 0.
 		- We use the lock offset to iterate through and, using the part offset, find participating parts.
-	4. While a bin hasn't been found and the lock hasn't been finished:
+	5. While a bin hasn't been found and the lock hasn't been finished:
 		- Check to see if finished. If finished:
 			- Set lock completed variable.
 			- Set assemble log time variable.
@@ -54,19 +61,37 @@ Event # - Format: File - Code Block (if applicable) - Action
 			- Log_Time_Assemble_Lock_Elapsed := Time_to_Assemble_Lock_Elapsed.
 			- Code Block:
 				- IF (LEN_INT(IN := Whats_In_Lock[Current_Lock_Offset][Current_Part_Offset]) < 1) then
-				- Lock_Completed := TRUE;
-				- Log_Time_Assemble_Lock := TRUE;
-				- Time_To_Assemble_Lock_ON := FALSE;
-				- Current_Lock := '';
-				- Log_Time_Assemble_Lock_Elapsed := Time_to_Assemble_Lock_Elapsed;
+					- Lock_Completed := TRUE;
+					- Log_Time_Assemble_Lock := TRUE;
+					- Time_To_Assemble_Lock_ON := FALSE;
+					- Current_Lock := '';
+					- Log_Time_Assemble_Lock_Elapsed := Time_to_Assemble_Lock_Elapsed;
+				- END_IF;
 		- If not finished:
 			- Iterate through and find matching part bins.
 			- If What's In Bin variable == Whats In Configuration[Lock_Offset][Part_Offset] :
 				- Match!Set Bin is Found variable.
 				- Assign index to the bin offset variable.
 			- Repeat until a match is found. Check found variable, or we've exceeded the max index, or the lock is finished.
-	5. If a configuration has been found and a part bin has been found turn on the light.
+	6. If a configuration has been found and a part bin has been found turn on the light.
 		- Use current bin offset variable to enter a switch case and turn on the appropriate light.
+		- If no matching case: Error/Horn/Alarm.
+	7. Check when the right sensor has been activated or energize signal/alarm/horn.
+		- IF Sensor_To_Int = Current_Bin_Offset THEN
+			- Correct_Bin_Located := TRUE;
+			- Start_Bin_Delay := TRUE;
+			- Horn := FALSE;
+			- Elsif Sensor_To_Int <> 0 then
+			- Horn := TRUE;
+		- END_IF;
+	8. Time delay between bin selections is completed.
+		- IF Between_Bins_delay_done THEN
+			- Correct_Bin_Located := FALSE;
+			- Bin_Is_Found := FALSE;
+			- Current_Part_Offset := Current_Part_Offset+1;
+			- Start_Bin_Delay := FALSE;
+			- Clear_Lights := TRUE;
+		- END_IF;
 
 ## Hardware
 - BMX XBP 0800
