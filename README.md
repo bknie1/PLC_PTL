@@ -8,7 +8,7 @@ This solution will use a PLC interface to inform station assembly employees what
 
 - 30 Configurations
 
-### Use Case
+#### Use Case
 1.	Employee receives chassis.
 2.	Employee scans barcode printed on chassis.
 3.	Barcode is compared to Database entries. Is there a match?
@@ -19,6 +19,54 @@ This solution will use a PLC interface to inform station assembly employees what
 6. Employee completes transaction and passes the chassis to the next station.
     - By hand.
     - By conveyer.
+
+### In Detail
+
+Event # - Format: File - Code Block (if applicable) - Action
+
+1. FBD: barcode_scan - N/A - Reads serial input from scanner. Stores it in read buffer. Make one FB for each station.
+	- ADDM and INPUT_CHAR instructions to translate barcode string. Reading from NOM module.
+2. FBD: main - N/A - Create Workstation DFB. Create a DFB for each workstation and change parameters to reflect position.
+	- Input Parameters
+		- Workstation specific ID -> Workstation ID.
+		- Station specific sensors -> sensors.
+		- Station specific configuration array -> configuration array.
+			- This is a double dimensioned array. The first array is the list of lock part numbers. The second array is a list of parts that are in each lock. So if the Current_Lock is at position 3 then Configuration[3][list of parts in position 3].
+		- Station specific bin array - > bin array.
+		- Station specific lock time arrary -> Time to Asssemble.
+		- Station specific current lock -> current lock.
+		- Station specific incorrect -> incorrect indicator.
+	- Output Parameters: Specific lights as output.
+		- Station specific lights -> lights.
+		- Shared Horn/Alarm -> Horn/Alarm.
+3. DFB: WorkStation - Overall - Code is reading for processing.
+	1. Time stamp when assembly starts. Time to assemble lock variable.
+	2. Find lock offset. Iterate through until a match is found. Logic: While match not found. Syntax: IF NOT ... THEN
+		- Match == FALSE? Error.
+	3. Match == TRUE? Assign match index to current lock offset. Part offset is set to 0.
+		- We use the lock offset to iterate through and, using the part offset, find participating parts.
+	4. While a bin hasn't been found and the lock hasn't been finished:
+		- Check to see if finished. If finished:
+			- Set lock completed variable.
+			- Set assemble log time variable.
+			- Set time to assemble lock on variable.
+			- Reset current lock ('').
+			- Log_Time_Assemble_Lock_Elapsed := Time_to_Assemble_Lock_Elapsed.
+			- Code Block:
+				- IF (LEN_INT(IN := Whats_In_Lock[Current_Lock_Offset][Current_Part_Offset]) < 1) then
+				- Lock_Completed := TRUE;
+				- Log_Time_Assemble_Lock := TRUE;
+				- Time_To_Assemble_Lock_ON := FALSE;
+				- Current_Lock := '';
+				- Log_Time_Assemble_Lock_Elapsed := Time_to_Assemble_Lock_Elapsed;
+		- If not finished:
+			- Iterate through and find matching part bins.
+			- If What's In Bin variable == Whats In Configuration[Lock_Offset][Part_Offset] :
+				- Match!Set Bin is Found variable.
+				- Assign index to the bin offset variable.
+			- Repeat until a match is found. Check found variable, or we've exceeded the max index, or the lock is finished.
+	5. If a configuration has been found and a part bin has been found turn on the light.
+		- Use current bin offset variable to enter a switch case and turn on the appropriate light.
 
 ## Hardware
 - BMX XBP 0800
@@ -32,31 +80,6 @@ This solution will use a PLC interface to inform station assembly employees what
 - NOM 0200.2
 	- Serial Scanner Input
 	- Use .2, not .1. .2 is the newer model.
-	
-## Variables
-- MAIN/GLOBAL
-	- WorkStation 1 DFB
-		- Input
-			- L1_W1_Sensor_1 through L1_W1_Sensor_21 --> Bin_1 through Bin_21
-				- Strip workstation designation for derived FB logic. EBOOL.
-			- W1_Whats_In_Lock --> Whats_In_Lock
-				- Strip workstation designation for derived FB logic. EBOOL.
-			- W1_Whats_In_Bin --> Whats_In_Bin
-				- Strip workstation designation for derived FB logic. EBOOL.
-			- Current_Lock --> Current_Lock. DINT.
-
-		-Output
-			- SensorLight_1 through SensorLight_21 --> L1_W1_Sensor_Light through ... 21. EBOOL.
-			- Red_Light, Green_Light
-			- Line_Error_Light
-			- Current_Lock. No need to return. Leave blank.
-			- Lock_Not_Found. No need to return. Leave blank.
-
-	- WorkStation 2 DFB
-		- Same as 1 with 'W2' instead of 'W1'.
-
-	- WorkStation 3 DFB
-		- Same as 1 with 'W3' instead of 'W1'.
 
 - BARCODE SCANNING SECTION
 
